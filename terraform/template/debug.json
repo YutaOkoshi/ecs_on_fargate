@@ -1,0 +1,27 @@
+[
+    {
+        "name": "debug",
+        "image": "${image}:${version}",
+        "logConfiguration": {
+            "logDriver": "awslogs",
+            "options": {
+                "awslogs-group": "${debug_log}",
+                "awslogs-region": "ap-northeast-1",
+                "awslogs-stream-prefix": "${env}"
+            }
+        },
+        "networkMode": "awsvpc",
+        "environment": [
+            {
+                "name": "ENV",
+                "value": "${env}"
+            }
+        ],
+        "secrets": [
+            {
+                "name": "HOGE",
+                "valueFrom": "${secret_arn}:HOGE::"
+            }
+        ]
+    }
+]

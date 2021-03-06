@@ -1,0 +1,37 @@
+version: 2.1
+
+orbs:
+  aws-ecr: circleci/aws-ecr@6.15.2
+  aws-ecs: circleci/aws-ecs@1.4.0
+
+workflows:
+
+  build_and_push_image_dev:
+    jobs:
+      - approval-to-build-and-deploy:
+          type: approval
+      - aws-ecr/build-and-push-image:
+          requires:
+            - approval-to-build-and-deploy
+          name: build-and-push-debug-image
+          account-url: AWS_ECR_HOST # 12341234.dkr.ecr.ap-northeast-1.amazonaws.com
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+          create-repo: true
+          dockerfile: "docker/debug/Dockerfile"
+          no-output-timeout: 20m
+          repo: "my-sandbox/debug"
+          skip-when-tags-exist: false
+          tag: "latest,${CIRCLE_SHA1}"
+
+      - aws-ecs/deploy-service-update:
+          name: deploy-service-update
+          requires:
+            - build-and-push-debug-image
+          aws-region: "ap-northeast-1"
+          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
+          aws-secret-access-key: "${AWS_SECRET_ACCESS_KEY}"
+          family: "my-sandbox-debug-family"
+          service-name: "my-sandbox-debug"
+          cluster-name: "arn:aws:ecs:ap-northeast-1:12341234:cluster/my-sandbox-cluster"
+          container-image-name-updates: "container=debug,tag=${CIRCLE_SHA1}"
